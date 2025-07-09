@@ -1,11 +1,12 @@
 package com.nadeenrr.caffeine.screen
 
-import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,25 +19,23 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.nadeenrr.caffeine.R
 import com.nadeenrr.caffeine.composable.AnimatedWaveLine
-import com.nadeenrr.caffeine.navigation.CompletedOrderArgs
+import com.nadeenrr.caffeine.navigation.Screen
 import com.nadeenrr.caffeine.ui.theme.Sniglet
 import com.nadeenrr.caffeine.ui.theme.Urbanist
 
@@ -49,7 +48,7 @@ fun CompletedOrderScreen(
     CompletedOrderScreenContent(
         capSize = capSize,
         volume = volume,
-        onClickNext = { navController.navigateUp() }
+        onClickNext = { navController.navigate(Screen.ReadyCoffeeScreen.route) }
     )
 }
 
@@ -59,6 +58,15 @@ fun CompletedOrderScreenContent(
     volume: String,
     onClickNext: () -> Unit
 ) {
+
+    var showFadeIn by remember { mutableStateOf(false) }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (showFadeIn) 0f else 1f,
+        animationSpec = tween(1000),
+        label = "FadeInAlpha"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,6 +80,7 @@ fun CompletedOrderScreenContent(
 
         Box(
             modifier = Modifier
+                .alpha(alpha)
                 .height(400.dp)
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
@@ -95,7 +104,7 @@ fun CompletedOrderScreenContent(
                     painter = painterResource(R.drawable.cap),
                     contentDescription = "",
                     modifier = Modifier
-                        .size(capSize)
+                        .size(300.dp)
                         .align(Alignment.Center)
                 )
                 Image(
@@ -110,15 +119,20 @@ fun CompletedOrderScreenContent(
         Spacer(Modifier.weight(1f))
 
         AnimatedWaveLine(
-            modifier = Modifier.padding(bottom = 18.dp)
+            modifier = Modifier.padding(bottom = 18.dp),
+            onAnimationEnd = {
+                showFadeIn = true
+                onClickNext()
+            }
         )
-
 
         Text(
             "Almost Done",
             fontSize = 22.sp,
             fontFamily = Urbanist,
             fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .alpha(alpha)
         )
 
         Text(
@@ -128,18 +142,27 @@ fun CompletedOrderScreenContent(
             color = Color(0x991F1F1F),
             fontWeight = FontWeight.Bold,
             modifier = Modifier
+                .alpha(alpha)
                 .padding(top = 8.dp, end = 12.dp)
-        )
 
-        Text(
-            "CO : FF : EE",
-            fontSize = 32.sp,
-            fontFamily = Sniglet,
-            color = Color(0xFF7C351B),
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(top = 8.dp, end = 18.dp)
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .alpha(alpha)
+                .padding(top = 8.dp, end = 18.dp)
+        ) {
+            listOf("CO", ":", "FF", ":", "EE").forEachIndexed { index, text ->
+                Text(
+                    text = text,
+                    fontSize = 32.sp,
+                    fontFamily = Sniglet,
+                    color = if (index % 2 == 0) Color(0xFF7C351B) else Color(0x1F1F1F1F),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 
@@ -147,5 +170,5 @@ fun CompletedOrderScreenContent(
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun OrderDoneContentPreview() {
-    // CompletedOrderScreenContent(onClickNext = {})
+    CompletedOrderScreenContent(onClickNext = {}, capSize = 300.dp, volume = "200l")
 }
